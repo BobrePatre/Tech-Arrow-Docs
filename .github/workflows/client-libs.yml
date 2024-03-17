@@ -88,20 +88,18 @@ jobs:
 
 
 
-
       - name: Create and Push Repositories
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
           commit_message=$(git log -1 --pretty=%B)
-          repo_name="${GITHUB_REPOSITORY##*/}"
-          project="${repo_name%.-Docs}"
+          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/-Docs\|-Declaration\|-Documentation//') # Assuming GITHUB_REPOSITORY environment variable contains the current repo name
           for spec in $spec_paths; do
             filename=$(basename "${spec%.*}")
-            filename=${filename%.swagger} # Удаляем .swagger из названия файла
+            filename=${filename%.swagger} # Remove .swagger from the filename
             for generator in go python dart-dio typescript-axios; do
-              library_name="$project-${filename}-${generator}-http-library"
+              library_name="${repo_prefix}-${filename}-${generator}-http-library"
               output_dir="generated-clients/$library_name"
           
               echo "Checking if $library_name repository exists..."
@@ -111,7 +109,8 @@ jobs:
                 echo "Creating repository $library_name..."
                 curl -u "BobrePatre:$GH_PAT" https://api.github.com/user/repos -d "{\"name\":\"$library_name\"}"
               fi
-
+          
+              mkdir -p "$output_dir" # Ensure the directory exists
               cd "$output_dir" || exit 1
               git init
               git config user.name "GitHub Actions"
@@ -124,3 +123,4 @@ jobs:
               cd -
             done
           done
+
