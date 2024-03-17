@@ -30,8 +30,10 @@ jobs:
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
           for spec in $spec_paths; do
             filename=$(basename "${spec%.*}")
+            filename=${filename%.swagger} # Удаляем .swagger из названия файла
             for generator in go python dart-dio typescript-axios; do
-              output_dir="generated-clients/${filename}-${generator}-library"
+              library_name="${filename}-${generator}-library"
+              output_dir="generated-clients/$library_name"
               mkdir -p "$output_dir"
               echo "Generating $generator client for $spec"
               wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.3.0/openapi-generator-cli-5.3.0.jar -O openapi-generator-cli.jar
@@ -47,28 +49,28 @@ jobs:
           commit_message=$(git log -1 --pretty=%B)
           for spec in $spec_paths; do
             filename=$(basename "${spec%.*}")
+            filename=${filename%.swagger} # Удаляем .swagger из названия файла
             for generator in go python dart-dio typescript-axios; do
-              repo_name="${filename}-${generator}-library"
-              output_dir="generated-clients/$repo_name"
-
-              echo "Checking if $repo_name repository exists..."
-              if curl --silent --output /dev/null --head --fail "https://github.com/BobrePatre/$repo_name"; then
-                echo "Repository $repo_name already exists."
+              library_name="${filename}-${generator}-library"
+              output_dir="generated-clients/$library_name"
+          
+              echo "Checking if $library_name repository exists..."
+              if curl --silent --output /dev/null --head --fail "https://github.com/BobrePatre/$library_name"; then
+                echo "Repository $library_name already exists."
               else
-                echo "Creating repository $repo_name..."
-                curl -u "BobrePatre:$GH_PAT" https://api.github.com/user/repos -d '{"name":"'$repo_name'"}'
+                echo "Creating repository $library_name..."
+                curl -u "BobrePatre:$GH_PAT" https://api.github.com/user/repos -d "{\"name\":\"$library_name\"}"
               fi
 
-              echo "Pushing to GitHub Repository $repo_name"
-              cd "$output_dir"
+              cd "$output_dir" || exit 1
               git init
               git config user.name "GitHub Actions"
               git config user.email "actions@github.com"
               git add .
               git commit -m "$commit_message"
               git branch -M main
-              git remote add origin https://BobrePatre:$GH_PAT@github.com/BobrePatre/$repo_name.git
+              git remote add origin https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git
               git push -u origin main -f
-              cd ../../..
+              cd -
             done
           done
