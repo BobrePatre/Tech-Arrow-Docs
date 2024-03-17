@@ -67,6 +67,9 @@
         },
         "body": {
           "type": "string"
+        },
+        "bobet": {
+          "type": "string"
         }
       },
       "title": "CreateExampleRequest"
