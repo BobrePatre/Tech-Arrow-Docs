@@ -91,9 +91,10 @@ jobs:
         run: |
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
           commit_message=$(git log -1 --pretty=%B)
+          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/-Docs\|-Declaration\|-Documentation//') # Assuming GITHUB_REPOSITORY environment variable contains the current repo name
           for spec in $spec_paths; do
             filename=$(basename "${spec%.*}")
-            filename=${filename%.swagger}
+            filename=${filename%.swagger} # Remove .swagger from the filename
             for generator in go python dart-dio typescript-axios; do
               library_name="${repo_prefix}-${filename}-${generator}-http-library"
               output_dir="generated-clients/$library_name"
@@ -106,18 +107,16 @@ jobs:
                 curl -u "BobrePatre:$GH_PAT" https://api.github.com/user/repos -d "{\"name\":\"$library_name\"}"
               fi
           
+              mkdir -p "$output_dir" # Ensure the directory exists
               cd "$output_dir" || exit 1
               git init
               git config user.name "GitHub Actions"
               git config user.email "actions@github.com"
-              git remote add origin https://github.com/BobrePatre/$library_name.git
-
-              # Создаем первую ветку и делаем первый коммит, если необходимо
-              git checkout -b main
               git add .
-              git commit -m "$commit_message" || echo "No changes to commit."
+              git commit -m "$commit_message"
+              git branch -M main
+              git remote add origin https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git
               git push -u origin main -f
               cd -
             done
-
-
+          done
