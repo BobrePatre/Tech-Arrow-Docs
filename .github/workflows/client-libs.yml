@@ -99,7 +99,7 @@ jobs:
             filename=$(basename "${spec%.*}")
             filename=${filename%.swagger} # Удаляем .swagger из названия файла
             for generator in go python dart-dio typescript-axios; do
-              library_name="${filename}-${generator}-library"
+              library_name="${filename}-${generator}-http-library"
               output_dir="generated-clients/$library_name"
           
               echo "Checking if $library_name repository exists..."
