@@ -1,0 +1,55 @@
+name: Generate Client Libraries and Repositories
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  generate-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+
+      - name: Generate and Push Clients
+        run: |
+          mkdir generated-clients
+          find openapi -type f \( -iname "*.yaml" -o -iname "*.json" \) | while read spec; do
+            filename=$(basename "$spec")
+            repo_name="${filename%.*}" # Удаляем расширение файла
+            repo_name="${repo_name%.swagger}" # Удаляем '.swagger'
+            language="javascript" # Пример для JavaScript
+            output_dir="generated-clients/$repo_name"
+            echo "Generating $language client for $spec"
+            wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.3.0/openapi-generator-cli-5.3.0.jar -O openapi-generator-cli.jar
+            java -jar openapi-generator-cli.jar generate -i "$spec" -g $language -o "$output_dir"
+          
+            echo "Checking if $repo_name repository exists..."
+            if curl --output /dev/null --silent --head --fail "https://github.com/yourusername/$repo_name"; then
+              echo "Repository $repo_name already exists."
+            else
+              echo "Repository $repo_name does not exist, creating..."
+              curl -u "yourusername:${{ secrets.GH_PAT }}" https://api.github.com/user/repos -d '{"name":"'$repo_name'"}'
+            fi
+          
+            echo "Pushing to GitHub Repository $repo_name"
+            cd "$output_dir"
+            git init
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            git add .
+            git commit -m "Update client library for $repo_name"
+            git branch -M main
+            git remote add origin https://github.com/yourusername/$repo_name.git
+            git push -u origin main -f
+            cd ../../..
+          done
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
