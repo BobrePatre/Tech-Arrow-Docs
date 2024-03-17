@@ -47,7 +47,7 @@ jobs:
             git add .
             git commit -m "Update client library for $repo_name"
             git branch -M main
-            git remote add origin https://yourusername:${{ secrets.GH_PAT }}@github.com/yourusername/$repo_name.git
+            git remote add origin https://BobrePatre:${{ secrets.GH_PAT }}@github.com/BobrePatre/$repo_name.git
             git push -u origin main -f
             cd ../../..
           done
