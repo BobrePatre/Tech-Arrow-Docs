@@ -100,7 +100,7 @@ jobs:
             filename=${filename%.swagger} # Remove .swagger from the filename
             for generator in go python dart-dio typescript-axios; do
               library_name="${repo_prefix}-${filename}-${generator}-http-library"
-              output_dir="generated-clients/$library_name"
+              output_dir="generated-clients/${filename}-${generator}-library"
           
               echo "Checking if $library_name repository exists..."
               if curl --silent --output /dev/null --head --fail "https://github.com/BobrePatre/$library_name"; then
@@ -115,11 +115,15 @@ jobs:
               git init
               git config user.name "GitHub Actions"
               git config user.email "actions@github.com"
+              if [ -z "$(git status --porcelain)" ]; then
+              echo "No changes to commit for $library_name."
+              else
               git add .
               git commit -m "$commit_message"
               git branch -M main
               git remote add origin https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git
               git push -u origin main -f
+              fi
               cd -
             done
           done
