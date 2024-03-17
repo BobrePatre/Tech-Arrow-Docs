@@ -79,11 +79,10 @@ jobs:
                     "url": "https://github.com/BobrePatre/${filename}-typescript-axios-library.git"
                   }
                 }
-              EOF
               fi
               cd -
-              fi
-              done
+            fi
+          done
         shell: bash
 
 
