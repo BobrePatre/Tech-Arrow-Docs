@@ -91,40 +91,33 @@ jobs:
         run: |
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
           commit_message=$(git log -1 --pretty=%B)
-          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/.Docs\|.Documentation\|.Declaration//' | awk -F '/' '{print $2}')
           for spec in $spec_paths; do
             filename=$(basename "${spec%.*}")
             filename=${filename%.swagger}
             for generator in go python dart-dio typescript-axios; do
               library_name="${repo_prefix}-${filename}-${generator}-http-library"
               output_dir="generated-clients/$library_name"
-
+          
               echo "Checking if $library_name repository exists..."
-              repo_full_name="BobrePatre/$library_name"
-              if curl --silent --output /dev/null --head --fail "https://github.com/$repo_full_name"; then
-                echo "Repository $repo_full_name already exists."
+              if curl --silent --output /dev/null --head --fail "https://github.com/BobrePatre/$library_name"; then
+                echo "Repository $library_name already exists."
               else
-                echo "Creating repository $repo_full_name..."
+                echo "Creating repository $library_name..."
                 curl -u "BobrePatre:$GH_PAT" https://api.github.com/user/repos -d "{\"name\":\"$library_name\"}"
               fi
-
+          
               cd "$output_dir" || exit 1
               git init
               git config user.name "GitHub Actions"
               git config user.email "actions@github.com"
               git remote add origin https://github.com/BobrePatre/$library_name.git
-              git fetch
-              git branch -m main
-              git pull origin main --allow-unrelated-histories -q
-          
-              if [ -z "$(git status --porcelain)" ]; then
-                echo "No changes to commit for $repo_full_name."
-              else
-                git add .
-                git commit -m "$commit_message"
-                git push --force https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git main
-              fi
+
+              # Создаем первую ветку и делаем первый коммит, если необходимо
+              git checkout -b main
+              git add .
+              git commit -m "$commit_message" || echo "No changes to commit."
+              git push -u origin main -f
               cd -
             done
-          done
+
 
