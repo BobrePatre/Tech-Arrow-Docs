@@ -31,7 +31,7 @@ jobs:
         run: |
           mkdir -p generated-clients
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
-          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/.Docs\|.Documentation\|.Declaration//' | awk -F '/' '{print $2}')
+          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/BobrePatre\///' | sed 's/-Docs\|-Declaration\|-Documentation//')
           for spec in $spec_paths; do
             filename=$(basename "${spec%.*}")
             filename=${filename%.swagger}
@@ -49,7 +49,7 @@ jobs:
       - name: Customize package.json for TypeScript Axios
         run: |
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
-          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/.Docs\|.Documentation\|.Declaration//' | awk -F '/' '{print $2}')
+          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/BobrePatre\///' | sed 's/-Docs\|-Declaration\|-Documentation//')
           for spec in $spec_paths; do
             filename=$(basename "${spec%.*}")
             filename=${filename%.swagger}
@@ -91,7 +91,7 @@ jobs:
         run: |
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
           commit_message=$(git log -1 --pretty=%B)
-          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/-Docs\|-Declaration\|-Documentation//') # Assuming GITHUB_REPOSITORY environment variable contains the current repo name
+          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/BobrePatre\///' | sed 's/-Docs\|-Declaration\|-Documentation//')
           for spec in $spec_paths; do
             filename=$(basename "${spec%.*}")
             filename=${filename%.swagger} # Remove .swagger from the filename
@@ -109,14 +109,18 @@ jobs:
           
               mkdir -p "$output_dir" # Ensure the directory exists
               cd "$output_dir" || exit 1
-              git init
-              git config user.name "GitHub Actions"
-              git config user.email "actions@github.com"
-              git add .
-              git commit -m "$commit_message"
-              git branch -M main
-              git remote add origin https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git
-              git push -u origin main -f
+              if [ "$(ls -A .)" ]; then # Check if directory is not empty
+                git init
+                git config user.name "GitHub Actions"
+                git config user.email "actions@github.com"
+                git add .
+                git commit -m "$commit_message"
+                git branch -M main
+                git remote add origin https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git
+                git push -u origin main -f
+              else
+                echo "No files to commit in $output_dir, skipping..."
+              fi
               cd -
             done
           done
