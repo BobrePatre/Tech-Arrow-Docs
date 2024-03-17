@@ -55,6 +55,3 @@ generate-openapi: CREATE_OPENAPI_OUT_DIR
 	--openapiv2_opt=use_go_templates=true,preserve_rpc_order=true \
 	$(PROTO_FILES)
 
-
-
-
