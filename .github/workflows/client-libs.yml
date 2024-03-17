@@ -12,6 +12,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
+      - name: Install jq
+        run: sudo apt-get install jq
+
+
       - name: Set up JDK 11
         uses: actions/setup-java@v2
         with:
@@ -40,6 +44,40 @@ jobs:
               java -jar openapi-generator-cli.jar generate -i "$spec" -g "$generator" -o "$output_dir"
             done
           done
+
+      - name: Customize package.json for TypeScript Axios
+        run: |
+          spec_paths=${{ steps.find_specs.outputs.spec_paths }}
+          for spec in $spec_paths; do
+            filename=$(basename "${spec%.*}")
+            filename=${filename%.swagger}
+            ts_library_dir="generated-clients/${filename}-typescript-axios-library"
+            if [ -d "$ts_library_dir" ]; then
+              cd "$ts_library_dir"
+              # Проверяем наличие package.json перед изменением
+              if [ -f "package.json" ]; then
+                # Можно добавить свои зависимости или скрипты используя jq или другой инструмент
+                jq '. + {scripts: {build: "tsc"}, dependencies: {axios: "^0.21.1"}}' package.json > temp.json && mv temp.json package.json
+              else
+                # Создаем новый package.json, если он не сгенерирован
+                cat > package.json << EOF
+                {
+                  "name": "${filename}-typescript-axios-library",
+                  "version": "1.0.0",
+                  "description": "TypeScript Axios client generated from OpenAPI spec",
+                  "scripts": {
+                    "build": "tsc"
+                  },
+                  "dependencies": {
+                    "axios": "^0.21.1"
+                  }
+                }
+                EOF
+              fi
+              cd -
+            fi
+          done
+        shell: bash
 
       - name: Create and Push Repositories
         env:
