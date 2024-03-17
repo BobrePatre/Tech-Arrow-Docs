@@ -26,55 +26,49 @@ jobs:
 
       - name: Generate Clients
         run: |
+          mkdir -p generated-clients
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
           for spec in $spec_paths; do
-            filename=$(basename "$spec")
-            repo_name="${filename%.*}" # Удаляем расширение файла
-            repo_name="${repo_name%.swagger}" # Удаляем '.swagger'
-            output_dir="generated-clients/$repo_name"
-            mkdir -p "$output_dir"
-            echo "Generating client for $spec"
-            wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.3.0/openapi-generator-cli-5.3.0.jar -O openapi-generator-cli.jar
-            java -jar openapi-generator-cli.jar generate -i "$spec" -g javascript -o "$output_dir"
+            filename=$(basename "${spec%.*}")
+            for generator in go python dart-dio typescript-axios; do
+              output_dir="generated-clients/${filename}-${generator}-library"
+              mkdir -p "$output_dir"
+              echo "Generating $generator client for $spec"
+              wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.3.0/openapi-generator-cli-5.3.0.jar -O openapi-generator-cli.jar
+              java -jar openapi-generator-cli.jar generate -i "$spec" -g "$generator" -o "$output_dir"
+            done
           done
 
-      - name: Create Repositories If Not Exists
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          spec_paths=${{ steps.find_specs.outputs.spec_paths }}
-          for spec in $spec_paths; do
-            filename=$(basename "$spec")
-            repo_name="${filename%.*}"
-            repo_name="${repo_name%.swagger}"
-            echo "Checking if $repo_name repository exists..."
-            if curl --silent --output /dev/null --head --fail "https://github.com/BobrePatre/$repo_name"; then
-              echo "Repository $repo_name already exists."
-            else
-              echo "Creating repository $repo_name..."
-              curl -u "BobrePatre:$GH_PAT" https://api.github.com/user/repos -d '{"name":"'$repo_name'"}'
-            fi
-          done
-
-      - name: Commit and Push Clients
+      - name: Create and Push Repositories
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
           commit_message=$(git log -1 --pretty=%B)
           for spec in $spec_paths; do
-            filename=$(basename "$spec")
-            repo_name="${filename%.*}"
-            repo_name="${repo_name%.swagger}"
-            output_dir="generated-clients/$repo_name"
-            cd "$output_dir"
-            git init
-            git config user.name "GitHub Actions"
-            git config user.email "actions@github.com"
-            git add .
-            git commit -m "$commit_message"
-            git branch -M main
-            git remote add origin https://BobrePatre:$GH_PAT@github.com/BobrePatre/$repo_name.git
-            git push -u origin main -f
-            cd ../../..
+            filename=$(basename "${spec%.*}")
+            for generator in go python dart-dio typescript-axios; do
+              repo_name="${filename}-${generator}-library"
+              output_dir="generated-clients/$repo_name"
+
+              echo "Checking if $repo_name repository exists..."
+              if curl --silent --output /dev/null --head --fail "https://github.com/BobrePatre/$repo_name"; then
+                echo "Repository $repo_name already exists."
+              else
+                echo "Creating repository $repo_name..."
+                curl -u "BobrePatre:$GH_PAT" https://api.github.com/user/repos -d '{"name":"'$repo_name'"}'
+              fi
+
+              echo "Pushing to GitHub Repository $repo_name"
+              cd "$output_dir"
+              git init
+              git config user.name "GitHub Actions"
+              git config user.email "actions@github.com"
+              git add .
+              git commit -m "$commit_message"
+              git branch -M main
+              git remote add origin https://BobrePatre:$GH_PAT@github.com/BobrePatre/$repo_name.git
+              git push -u origin main -f
+              cd ../../..
+            done
           done
