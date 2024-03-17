@@ -104,7 +104,6 @@ jobs:
                 echo "Repository $library_name already exists, cloning and updating..."
                 git clone https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git "$output_dir"
                 cd "$output_dir" || exit 1
-                # Предполагается, что ваши файлы уже сгенерированы в $output_dir
                 git config user.name "GitHub Actions"
                 git config user.email "actions@github.com"
                 git add .
@@ -118,7 +117,6 @@ jobs:
               else
                 echo "Creating repository $library_name..."
                 curl -u "BobrePatre:$GH_PAT" https://api.github.com/user/repos -d "{\"name\":\"$library_name\"}"
-                mkdir -p "$output_dir" # Ensure the directory exists
                 cd "$output_dir" || exit 1
                 git init
                 git config user.name "GitHub Actions"
