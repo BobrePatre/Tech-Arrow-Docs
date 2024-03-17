@@ -67,9 +67,6 @@
         },
         "body": {
           "type": "string"
-        },
-        "yatahakiIsTheBest": {
-          "type": "boolean"
         }
       },
       "title": "CreateExampleRequest"
