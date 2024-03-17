@@ -78,7 +78,7 @@ jobs:
                     "url": "https://github.com/BobrePatre/${repo_prefix}-${filename}-typescript-axios-http-library.git"
                   }
                 }
-                EOF
+          EOF
               fi
               cd -
             fi
