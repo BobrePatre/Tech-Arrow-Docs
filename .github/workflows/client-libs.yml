@@ -32,11 +32,11 @@ jobs:
             java -jar openapi-generator-cli.jar generate -i "$spec" -g $language -o "$output_dir"
           
             echo "Checking if $repo_name repository exists..."
-            if curl --output /dev/null --silent --head --fail "https://github.com/yourusername/$repo_name"; then
+            if curl --output /dev/null --silent --head --fail "https://github.com/BobrePatre/$repo_name"; then
               echo "Repository $repo_name already exists."
             else
               echo "Repository $repo_name does not exist, creating..."
-              curl -u "yourusername:${{ secrets.GH_PAT }}" https://api.github.com/user/repos -d '{"name":"'$repo_name'"}'
+              curl -u "BobrePatre:${{ secrets.GH_PAT }}" https://api.github.com/user/repos -d '{"name":"'$repo_name'"}'
             fi
           
             echo "Pushing to GitHub Repository $repo_name"
