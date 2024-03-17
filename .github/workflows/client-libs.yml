@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  generate-and-deploy:
+  generate-and-deploy-http-libs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -95,11 +95,13 @@ jobs:
         run: |
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
           commit_message=$(git log -1 --pretty=%B)
+          repo_name="${GITHUB_REPOSITORY##*/}"
+          project="${repo_name%.-Docs}"
           for spec in $spec_paths; do
             filename=$(basename "${spec%.*}")
             filename=${filename%.swagger} # Удаляем .swagger из названия файла
             for generator in go python dart-dio typescript-axios; do
-              library_name="${filename}-${generator}-http-library"
+              library_name="$project-${filename}-${generator}-http-library"
               output_dir="generated-clients/$library_name"
           
               echo "Checking if $library_name repository exists..."
