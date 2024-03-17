@@ -98,35 +98,37 @@ jobs:
             for generator in go python dart-dio typescript-axios; do
               library_name="${repo_prefix}-${filename}-${generator}-http-library"
               output_dir="generated-clients/$library_name"
-              tmp_clone_dir="tmp/$library_name"
           
               echo "Checking if $library_name repository exists..."
               if curl --silent --output /dev/null --head --fail "https://github.com/BobrePatre/$library_name"; then
-                echo "Repository $library_name already exists, cloning for update..."
-                mkdir -p "$tmp_clone_dir"
+                echo "Repository $library_name already exists, updating..."
+                # Создаем временную директорию для клонирования и обновления репозитория
+                tmp_clone_dir=$(mktemp -d)
                 git clone https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git "$tmp_clone_dir"
           
-                rsync -av --exclude='.git' "$tmp_clone_dir/" "$output_dir/"
-                rm -rf "$tmp_clone_dir"
+                # Синхронизируем сгенерированные файлы во временную директорию
+                rsync -av --exclude='.git' "$output_dir/" "$tmp_clone_dir/"
           
-                cd "$output_dir" || exit 1
-                git init
+                cd "$tmp_clone_dir" || exit 1
                 git config user.name "GitHub Actions"
                 git config user.email "actions@github.com"
                 git add .
                 if ! git diff --cached --exit-code; then
                   git commit -m "$commit_message"
-                  git branch -M main
-                  git remote add origin https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git
-                  git push -u origin main
+                  git pull --rebase origin main
+                  git push origin main
                 else
                   echo "No changes to commit for $library_name."
                 fi
                 cd -
+                # Удаляем временную директорию
+                rm -rf "$tmp_clone_dir"
               else
                 echo "Creating repository $library_name..."
                 curl -u "BobrePatre:$GH_PAT" https://api.github.com/user/repos -d "{\"name\":\"$library_name\"}"
           
+                # Инициализация и первый коммит в новом репозитории
+                mkdir -p "$output_dir"
                 cd "$output_dir" || exit 1
                 git init
                 git config user.name "GitHub Actions"
