@@ -56,32 +56,33 @@ jobs:
               cd "$ts_library_dir"
               # Проверяем наличие package.json перед изменением
               if [ -f "package.json" ]; then
-                # Добавляем repository как объект
-                jq '.repository = {"type": "git", "url": "https://github.com/BobrePatre/'"$filename"'-typescript-axios-library.git"}' package.json > temp.json && mv temp.json package.json
+              # Добавляем repository как объект
+              jq '.repository = {"type": "git", "url": "https://github.com/BobrePatre/'"$filename"'-typescript-axios-library.git"}' package.json > temp.json && mv temp.json package.json
               else
-                # Создаем новый package.json, если он не сгенерирован
-                cat > package.json <<EOF
-                {
-                  "name": "${filename}-typescript-axios-library",
-                  "version": "1.0.0",
-                  "description": "TypeScript Axios client generated from OpenAPI spec",
-                  "main": "index.js",
-                  "scripts": {
-                    "build": "tsc"
-                  },
-                  "author": "",
-                  "license": "ISC",
-                  "dependencies": {
-                    "axios": "^0.21.1"
-                  },
-                  "repository": {
-                    "type": "git",
-                    "url": "https://github.com/BobrePatre/${filename}-typescript-axios-library.git"
-                  }
+              # Создаем новый package.json, если он не сгенерирован
+              cat > package.json <<EOF
+              {
+                "name": "${filename}-typescript-axios-library",
+                "version": "1.0.0",
+                "description": "TypeScript Axios client generated from OpenAPI spec",
+                "main": "index.js",
+                "scripts": {
+                  "build": "tsc"
+                },
+                "author": "",
+                "license": "ISC",
+                "dependencies": {
+                  "axios": "^0.21.1"
+                },
+                "repository": {
+                  "type": "git",
+                  "url": "https://github.com/BobrePatre/${filename}-typescript-axios-library.git"
                 }
+              }
+          EOF
               fi
               cd -
-            fi
+              fi
           done
         shell: bash
 
