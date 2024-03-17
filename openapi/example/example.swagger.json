@@ -67,9 +67,6 @@
         },
         "body": {
           "type": "string"
-        },
-        "yatahaki": {
-          "type": "string"
         }
       },
       "title": "CreateExampleRequest"
