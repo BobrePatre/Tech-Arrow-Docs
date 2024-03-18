@@ -18,10 +18,6 @@ jobs:
         id: repo_prefix
         run: echo "::set-output name=prefix::$(echo "$GITHUB_REPOSITORY" | sed 's/.*\///' | sed 's/-Docs\|-Declaration\|-Documentation//')"
 
-      - name: Manage Permissions For Scripts
-        id: scripts_perms
-        run: |
-          chmod +x scripts/manage-repo.sh
 
   generate-and-deploy-http-libs:
     needs: setup-environment
@@ -82,6 +78,7 @@ jobs:
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
+          chmod +x scripts/manage-repo.sh
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
           commit_message=$(git log -1 --pretty=%B)
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
