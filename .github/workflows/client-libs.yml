@@ -44,6 +44,7 @@ jobs:
           mkdir -p generated-clients
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
+          wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.3.0/openapi-generator-cli-5.3.0.jar -O openapi-generator-cli.jar
           for spec in $spec_paths; do
             filename=$(basename "${spec%.*}" | sed 's/\.swagger$//')
             for generator in go python dart-dio typescript-axios; do
@@ -51,7 +52,6 @@ jobs:
               output_dir="generated-clients/$library_name"
               mkdir -p "$output_dir"
               echo "Generating $generator client for $spec"
-              wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.3.0/openapi-generator-cli-5.3.0.jar -O openapi-generator-cli.jar
               java -jar openapi-generator-cli.jar generate -i "$spec" -g "$generator" -o "$output_dir"
             done
           done
