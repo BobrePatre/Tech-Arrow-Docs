@@ -39,7 +39,7 @@ jobs:
         run: |
           spec_paths=$(find openapi -name "*.swagger.json")
           echo "Founded specs $spec_paths"
-          echo "spec_paths=$$spec_paths" >> $GITHUB_OUTPUT
+          echo "spec_paths=$spec_paths" >> $GITHUB_OUTPUT
 
 
       - name: Generate Clients
