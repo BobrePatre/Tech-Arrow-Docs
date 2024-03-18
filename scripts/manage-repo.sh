@@ -13,7 +13,7 @@ if curl --silent --output /dev/null --head --fail "https://github.com/$owner/$li
   echo "Repository $library_name already exists, updating..."
   # Создаем временную директорию для клонирования и обновления репозитория
   tmp_clone_dir=$(mktemp -d)
-  git clone https://BobrePatre:$GH_PAT@github.com/$owner/$library_name.git "$tmp_clone_dir"
+  git clone https://BobrePatre:"$GH_PAT"@github.com/$owner/"$library_name".git "$tmp_clone_dir"
 
   # Синхронизируем сгенерированные файлы во временную директорию
   rsync -av --exclude='.git' "$output_dir/" "$tmp_clone_dir/"
@@ -44,6 +44,6 @@ else
   git add .
   git commit -m "$commit_message"
   git branch -M main
-  git remote add origin https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git
+  git remote add origin https://BobrePatre:"$GH_PAT"@github.com/BobrePatre/"$library_name".git
   git push -u origin main
 fi

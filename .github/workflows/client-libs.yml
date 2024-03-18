@@ -155,13 +155,12 @@ jobs:
           chmod +x scripts/manage-repo.sh
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           commit_message=$(git log -1 --pretty=%B)
-          mkdir -p generated-grpc-libs/{dart,go,python}
           proto_paths=${{ steps.find_protos.outputs.proto_paths }}
           for proto in $proto_paths; do
             filename=$(basename "${proto%.*}")
             for lang in dart go python; do
               library_name="${repo_prefix}-${filename}-${lang}-grpc-library"
-              output_dir="generated-grpc-libs/$lang/$library_name"
+              output_dir="generated-grpc-libs/$lang/$filename"
               # This script should handle checking, updating, or creating repositories
               scripts/manage-repo.sh "$library_name" "$output_dir" "$commit_message"
             done
