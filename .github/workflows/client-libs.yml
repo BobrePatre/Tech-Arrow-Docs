@@ -27,6 +27,10 @@ jobs:
 
       - name: "Check Targets"
         run: |
+          if [ ! -d "openapi" ]; then
+            echo "openapi dir is not exists, skipping job"
+          fi
+          
           spec_paths=$(find openapi -name "*.swagger.json")
           if [ -z "$spec_paths" ]; then 
             echo "Nothing to generate"
@@ -112,6 +116,10 @@ jobs:
 
       - name: "Check Targets"
         run: |
+          if [ ! -d "proto" ]; then
+            echo "proto dir is not exists, skipping job"
+          fi
+          
           proto_paths=$(find openapi -name "*.proto")
           if [ -z "$proto_paths" ]; then 
             echo "Nothing to generate"
