@@ -111,7 +111,7 @@ jobs:
           sdk: "stable"
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@main
         with:
           python-version: '3.x'
 
@@ -140,10 +140,11 @@ jobs:
           for proto in $proto_paths; do 
             protoc \
               $proto_include \
-              --dart_out=grpc:generated-grpc-libs/dart \
-              --go_out=generated-grpc-libs/go --go_opt=paths=source_relative \
-              --go-grpc_out=generated-grpc-libs/go --go-grpc_opt=paths=source_relative \
-              --python_out=generated-grpc-libs/python --python-grpc_out=generated-grpc-libs/python \
+              --dart_out generated-grpc-libs/dart \
+              --go_out generated-grpc-libs/go  \
+              --go_opt paths=source_relative \
+              --go-grpc_out generated-grpc-libs/go  \
+              --go-grpc_opt paths=source_relative \
               "$proto"
           done
 
