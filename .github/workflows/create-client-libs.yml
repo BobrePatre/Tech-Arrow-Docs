@@ -36,11 +36,11 @@ jobs:
             spec_paths=$(find openapi -name "*.swagger.json")
             if [ -z "$spec_paths" ]; then 
               echo "No .swagger.json files to generate, skipping step"
-              echo "TARGETS_EXISTS=${{ false }}" >> $GITHUB_ENV
+              echo "TARGETS_EXISTS=${{false}}" >> $GITHUB_ENV
               exit 0
             else
               echo "Spec files found, proceeding with the step"
-              echo "TARGETS_EXISTS=${{ true }}" >> $GITHUB_ENV
+              echo "TARGETS_EXISTS=${{true}}" >> $GITHUB_ENV
             fi
           fi
           echo $GITHUB_ENV
@@ -132,17 +132,17 @@ jobs:
         run: |
           if [ ! -d "proto" ]; then
             echo "openapi directory does not exist, skipping step"
-            echo "TARGETS_EXISTS=${{ false }}" >> $GITHUB_ENV
+            echo "TARGETS_EXISTS=${{false}}" >> $GITHUB_ENV
             exit 0
           else 
             spec_paths=$(find proto -name "*.proto")
             if [ -z "$spec_paths" ]; then 
               echo "No .swagger.json files to generate, skipping step"
-              echo "TARGETS_EXISTS=${{ false }}" >> $GITHUB_ENV
+              echo "TARGETS_EXISTS=${{false}}" >> $GITHUB_ENV
               exit 0
             else
               echo "Spec files found, proceeding with the step"
-              echo "TARGETS_EXISTS=${{ true }}" >> $GITHUB_ENV
+              echo "TARGETS_EXISTS=${{true}}" >> $GITHUB_ENV
             fi
           fi
 
