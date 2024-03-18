@@ -204,6 +204,7 @@ jobs:
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           commit_message=$(git log -1 --pretty=%B)
           proto_paths=$(find proto -name "*.proto")
+          echo $proto_paths
           for proto in $proto_paths; do
             filename=$(basename "${proto%.*}")
             echo $filename
