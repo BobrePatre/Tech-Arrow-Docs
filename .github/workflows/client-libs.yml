@@ -142,3 +142,142 @@ jobs:
               fi
             done
           done
+  
+  
+  
+  
+
+  generate-and-deploy-grpc-libs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Set up Dart
+        uses: actions/setup-dart@v1
+        with:
+          dart-version: 'stable'
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+
+      - name: Install Protobuf Compiler and Plugins
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1
+          go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.5.0
+          python -m pip install grpcio-tools
+          python -m pip install grpcio
+          dart pub global activate protoc_plugin
+          echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
+
+      - name: Find Proto Specifications
+        id: find_protos
+        run: |
+          echo "::set-output name=proto_paths::$(find proto -type f -iname "*.proto" | xargs)"
+        shell: bash
+
+      - name: Generate gRPC Clients and Servers
+        run: |
+          mkdir -p generated-grpc-clients
+          proto_paths=${{ steps.find_protos.outputs.proto_paths }}
+          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/BobrePatre\///' | sed 's/-Docs\|-Declaration\|-Documentation//')
+          for proto in $proto_paths; do
+            directory=$(dirname "${proto}")
+            filename=$(basename "${proto%.*}")
+            for generator in dart go python; do
+              library_name="${repo_prefix}-${filename}-${generator}-grpc-library"
+              output_dir="generated-grpc-clients/$library_name"
+              mkdir -p "$output_dir"
+              echo "Generating $generator gRPC client and server for $proto"
+              case $generator in
+              dart)
+                protoc --proto_path=$directory \
+                       --dart_out=grpc:"$output_dir" \
+                       "$proto"
+                ;;
+              go)
+                protoc --proto_path=$directory \
+                       --go_out="$output_dir" --go_opt=paths=source_relative \
+                       --go-grpc_out="$output_dir" --go-grpc_opt=paths=source_relative \
+                       "$proto"
+                ;;
+              python)
+                python -m grpc_tools.protoc --proto_path=$directory \
+                                            --python_out="$output_dir" \
+                                            --grpc_python_out="$output_dir" \
+                                            "$proto"
+                ;;
+              esac
+            done
+          done
+        shell: bash
+
+
+      - name: Create and Push Repositories
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          spec_paths=${{ steps.find_specs.outputs.spec_paths }}
+          commit_message=$(git log -1 --pretty=%B)
+          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/BobrePatre\///' | sed 's/-Docs\|-Declaration\|-Documentation//')
+          for spec in $spec_paths; do
+            filename=$(basename "${spec%.*}")
+            filename=${filename%.swagger} # Remove .swagger from the filename
+            for generator in go python dart-dio typescript-axios; do
+              library_name="${repo_prefix}-${filename}-${generator}-http-library"
+              output_dir="generated-grpc-clients/$library_name"
+
+              echo "Checking if $library_name repository exists..."
+              if curl --silent --output /dev/null --head --fail "https://github.com/BobrePatre/$library_name"; then
+                echo "Repository $library_name already exists, updating..."
+                # Создаем временную директорию для клонирования и обновления репозитория
+                tmp_clone_dir=$(mktemp -d)
+                git clone https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git "$tmp_clone_dir"
+
+                # Синхронизируем сгенерированные файлы во временную директорию
+                rsync -av --exclude='.git' "$output_dir/" "$tmp_clone_dir/"
+
+                cd "$tmp_clone_dir" || exit 1
+                git config user.name "GitHub Actions"
+                git config user.email "actions@github.com"
+                git add .
+                if ! git diff --cached --exit-code; then
+                  git commit -m "$commit_message"
+                  git pull --rebase origin main
+                  git push origin main
+                else
+                  echo "No changes to commit for $library_name."
+                fi
+                cd -
+                # Удаляем временную директорию
+                rm -rf "$tmp_clone_dir"
+              else
+                echo "Creating repository $library_name..."
+                curl -u "BobrePatre:$GH_PAT" https://api.github.com/user/repos -d "{\"name\":\"$library_name\"}"
+
+                # Инициализация и первый коммит в новом репозитории
+                mkdir -p "$output_dir"
+                cd "$output_dir" || exit 1
+                git init
+                git config user.name "GitHub Actions"
+                git config user.email "actions@github.com"
+                git add .
+                git commit -m "$commit_message"
+                git branch -M main
+                git remote add origin https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git
+                git push -u origin main
+                cd -
+              fi
+            done
+          done
+
