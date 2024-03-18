@@ -29,17 +29,17 @@ jobs:
         run: |
           if [ ! -d "openapi" ]; then
             echo "openapi dir is not exists, skipping step"
-            echo "TARGETS_EXISTS='false'" >> $GITHUB_ENV
+            echo "TARGETS_EXISTS=false" >> $GITHUB_ENV
             exit 0
           fi
           
           spec_paths=$(find openapi -name "*.swagger.json")
           if [ -z "$spec_paths" ]; then 
             echo "Nothing to generate, skipping step"
-            echo "TARGETS_EXISTS='false'" >> $GITHUB_ENV
+            echo "TARGETS_EXISTS=false" >> $GITHUB_ENV
             exit 0
           fi
-          echo "TARGETS_EXISTS='true'" >> $GITHUB_ENV
+          echo "TARGETS_EXISTS=true" >> $GITHUB_ENV
 
       - name: Install jq
         if: env.TARGETS_EXISTS == true
