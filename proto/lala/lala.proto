@@ -1,0 +1,82 @@
+syntax = 'proto3';
+
+package api.lala;
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option go_package = "github.com/BobrePatre/ProjectTemplate/pkg/api/grpc/golang/lala";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+    info: {
+        title: "lala API",
+        version: "v1",
+    },
+    security_definitions: {
+        security: {
+            key: "BearerAuth",
+            value: {
+                type: TYPE_OAUTH2
+                flow: FLOW_ACCESS_CODE
+                authorization_url: "https://keycloak.lala.com/auth/realms/yourrealm/protocol/openid-connect/auth",
+                token_url: "https://keycloak.lala.com/auth/realms/yourrealm/protocol/openid-connect/token",
+
+                scopes: {
+                    scope: {
+                        key: "openid",
+                        value: "OpenID Connect"
+                    },
+                    scope: {
+                        key: "email",
+                        value: "Email"
+                    },
+                    scope: {
+                        key: "profile",
+                        value: "Profile"
+                    }
+                }
+            }
+        }
+    },
+};
+
+service lalaService {
+    rpc lala(lalaRequest) returns (lalaResponse) {
+        option (google.api.http) = {
+            post: "/grpc/api/lala"
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Create an lala",
+            security: {
+                security_requirement: {key: "BearerAuth"}
+            }
+        };
+    }
+}
+
+message lalaRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema : {
+            title: "CreatelalaRequest"
+        }
+
+    };
+
+    string title = 1;
+    string description = 2;
+    string body = 3;
+}
+
+message lalaResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema : {
+            title: "CreatelalaResponse"
+        }
+    };
+
+
+    string title = 1;
+    string description = 2;
+    string body = 3;
+}

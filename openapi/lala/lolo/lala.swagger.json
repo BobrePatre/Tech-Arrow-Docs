@@ -1,0 +1,131 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "lolo API",
+    "version": "v1"
+  },
+  "tags": [
+    {
+      "name": "loloService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/grpc/api/lolo": {
+      "post": {
+        "summary": "Create an lolo",
+        "operationId": "loloService_lolo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/lolololoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/lolololoRequest"
+            }
+          }
+        ],
+        "tags": [
+          "loloService"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "lolololoRequest": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        }
+      },
+      "title": "CreateloloRequest"
+    },
+    "lolololoResponse": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        }
+      },
+      "title": "CreateloloResponse"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "BearerAuth": {
+      "type": "oauth2",
+      "flow": "accessCode",
+      "authorizationUrl": "https://keycloak.lolo.com/auth/realms/yourrealm/protocol/openid-connect/auth",
+      "tokenUrl": "https://keycloak.lolo.com/auth/realms/yourrealm/protocol/openid-connect/token",
+      "scopes": {
+        "email": "Email",
+        "openid": "OpenID Connect",
+        "profile": "Profile"
+      }
+    }
+  }
+}
