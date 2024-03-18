@@ -193,30 +193,27 @@ jobs:
 
       - name: Generate gRPC Clients and Servers
         run: |
-          mkdir -p generated-grpc-clients/dart
-          mkdir -p generated-grpc-clients/go
-          mkdir -p generated-grpc-clients/python
+          mkdir -p generated-grpc-clients/dart generated-grpc-clients/go generated-grpc-clients/python
+          proto_include="-I proto -I vendor -I vendor/googleapis -I vendor/grpc-gateway"
           proto_paths=${{ steps.find_protos.outputs.proto_paths }}
-          repo_prefix=$(echo "$GITHUB_REPOSITORY" | awk '{print tolower($0)}' | sed 's/bobrepatre\///' | sed 's/-docs\|-declaration\|-documentation//')
           for proto in $proto_paths; do
-            directory=$(dirname "${proto}")
-            filename=$(basename "${proto%.*}")
-            output_base="generated-grpc-clients"
-            output_dart="${output_base}/dart/${repo_prefix}-${filename}-grpc-library"
-            output_go="${output_base}/go/${repo_prefix}-${filename}-grpc-library"
-            output_python="${output_base}/python/${repo_prefix}-${filename}-grpc-library"
-            protoc -I proto \
-                   -I vendor \
-                   -I vendor/googleapis \
-                   -I vendor/grpc-gateway \
-                   --dart_out=grpc:"$output_dart" \
-                   --go_out="$output_go" --go_opt=paths=source_relative \
-                   --go-grpc_out="$output_go" --go-grpc_opt=paths=source_relative \
-                   --python_out="$output_python" \
-                   --python-grpc_out="$output_python" \
-                   "${proto}"
+            # Adjust the output directories below as necessary
+            dart_out_dir="generated-grpc-clients/dart"
+            go_out_dir="generated-grpc-clients/go"
+            python_out_dir="generated-grpc-clients/python"
+          
+            echo "Generating gRPC client and server for $proto"
+            protoc $proto_include \
+                   --dart_out=grpc:"$dart_out_dir" \
+                   --go_out="$go_out_dir" --go_opt=paths=source_relative \
+                   --go-grpc_out="$go_out_dir" --go-grpc_opt=paths=source_relative \
+                   --python_out="$python_out_dir" \
+                   --grpc_python_out="$python_out_dir" \
+                   "$proto"
           done
         shell: bash
+        env:
+          PATH: ${{ env.PATH }}:/home/runner/.local/bin
 
 
       - name: Create and Push Repositories
@@ -236,12 +233,10 @@ jobs:
               echo "Checking if $library_name repository exists..."
               if curl --silent --output /dev/null --head --fail "https://github.com/BobrePatre/$library_name"; then
                 echo "Repository $library_name already exists, updating..."
-                # Создаем временную директорию для клонирования и обновления репозитория
                 tmp_clone_dir=$(mktemp -d)
                 git clone https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git "$tmp_clone_dir"
 
-                # Синхронизируем сгенерированные файлы во временную директорию
-                rsync -av --exclude='.git' "$output_dir/" "$tmp_clone_dir/"
+                rsync -av --exclude='.git' "$output_dir/" "$tmp_clone_dir/"Ы
 
                 cd "$tmp_clone_dir" || exit 1
                 git config user.name "GitHub Actions"
