@@ -29,6 +29,7 @@ jobs:
         run: |
           if [ ! -d "openapi" ]; then
             echo "openapi dir is not exists, skipping job"
+            exit 0
           fi
           
           spec_paths=$(find openapi -name "*.swagger.json")
