@@ -36,7 +36,10 @@ jobs:
 
       - name: Find API Specifications
         id: find_specs
-        run: echo "spec_paths=$(find openapi -type f \( -iname "*.yaml" -o -iname "*.json" \) | xargs)" >> $GITHUB_OUTPUT
+        run: |
+          IFS=$'\n' read -r -d '' -a spec_paths < <(find openapi -type f \( -iname "*.yaml" -o -iname "*.json" \) -print0)
+          echo "spec_paths=${spec_paths[*]}" >> $GITHUB_OUTPUT
+
 
       - name: Generate Clients
         run: |
