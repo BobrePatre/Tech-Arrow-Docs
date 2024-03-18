@@ -193,6 +193,7 @@ jobs:
 
       - name: Generate gRPC Clients and Servers
         run: |
+          export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
           dart_out_dir="generated-grpc-libs/dart"
           go_out_dir="generated-grpc-libs/go"
           
