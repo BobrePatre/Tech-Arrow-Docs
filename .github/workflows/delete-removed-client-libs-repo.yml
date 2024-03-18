@@ -27,19 +27,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Find Deleted Files
-        id: find_deleted
-        run: |
-          git diff --name-status ${{ github.event.before }} ${{ github.sha }} | grep '^D' | cut -f2 > deleted_files.txt
-          echo $(cat deleted_files.txt)
-          echo "deleted_files=$(cat deleted_files.txt)" >> $GITHUB_OUTPUT
-
       - name: Delete Repos for Deleted Specs
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           chmod +x scripts/delete-repo.sh
-          deleted_files=$(echo "${{ steps.find_deleted.outputs.deleted_files }}" | tr ' ' '\n')
+          git diff --name-status ${{ github.event.before }} ${{ github.sha }} | grep '^D' | cut -f2 > deleted_files.txt
+          deleted_files=$(cat deleted_files.txt)
           repo_prefix="${{ needs.setup-environment.outputs.repo_prefix }}"
           for file in $deleted_files; do
             if [[ "$file" =~ \.(swagger\.json)$ ]]; then
