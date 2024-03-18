@@ -60,7 +60,7 @@ jobs:
 
       - name: Customize package.json for TypeScript Axios
         run: |
-          spec_paths=${{ steps.find_specs.outputs.spec_paths }}
+          spec_paths=(${{ steps.find_specs.outputs.spec_paths }})
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           for spec in $spec_paths; do
             chmod +x spec
@@ -82,7 +82,7 @@ jobs:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           chmod +x scripts/manage-repo.sh
-          spec_paths=${{ steps.find_specs.outputs.spec_paths }}
+          spec_paths=(${{ steps.find_specs.outputs.spec_paths }})
           commit_message=$(git log -1 --pretty=%B)
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           for spec in $spec_paths; do
