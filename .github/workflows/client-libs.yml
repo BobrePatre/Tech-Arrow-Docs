@@ -25,6 +25,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@main
 
+      - name: "Check Targets"
+        run: |
+          spec_paths=$(find openapi -name "*.swagger.json")
+          if [ -z "$spec_paths" ]; then 
+            echo "Nothing to generate"
+            exit 0
+          fi
+
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install jq -y
 
@@ -40,6 +48,10 @@ jobs:
       - name: Generate Clients
         run: |
           spec_paths=$(find openapi -name "*.swagger.json")
+          if [ -z "$spec_paths" ]; then 
+            echo "Nothing to generate"
+            exit 0
+          fi
           mkdir -p generated-clients
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.3.0/openapi-generator-cli-5.3.0.jar -O openapi-generator-cli.jar
@@ -97,6 +109,14 @@ jobs:
         uses: actions/checkout@main
         with:
          submodules: "recursive"
+
+      - name: "Check Targets"
+        run: |
+          proto_paths=$(find openapi -name "*.proto")
+          if [ -z "$proto_paths" ]; then 
+            echo "Nothing to generate"
+            exit 0
+          fi
 
 
       - name: Set up Go
