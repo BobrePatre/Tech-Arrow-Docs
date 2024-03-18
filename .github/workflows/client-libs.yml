@@ -11,11 +11,11 @@ jobs:
     outputs:
       repo_prefix: ${{ steps.repo_prefix.outputs.prefix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
 
       - name: Determine Repo Prefix
         id: repo_prefix
-        run: echo "::set-output name=prefix::$(echo "$GITHUB_REPOSITORY" | sed 's/.*\///' | sed 's/-Docs\|-Declaration\|-Documentation//')"
+        run: echo "name=prefix::$(echo "$GITHUB_REPOSITORY" | sed 's/.*\///' | sed 's/-Docs\|-Declaration\|-Documentation//')" >> $GITHUB_OUTPUT
 
 
   generate-and-deploy-http-libs:
@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@main
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install jq -y
@@ -95,7 +95,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@main
 
       - name: Set up Go
         uses: actions/setup-go@v2
