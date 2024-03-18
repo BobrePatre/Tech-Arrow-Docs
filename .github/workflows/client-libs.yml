@@ -36,12 +36,15 @@ jobs:
 
       - name: Find API Specifications
         id: find_specs
-        run: echo "spec_paths=$(find openapi -type f \( -iname "*.yaml" -o -iname "*.json" \) | xargs)" >> $GITHUB_OUTPUT
+        run: |
+          spec_paths=$(find openapi -type f \( -iname "*.yaml" -o -iname "*.json" \) -print0 | xargs -0 echo)
+          echo "spec_paths=$spec_paths" >> $GITHUB_OUTPUT
+
 
       - name: Generate Clients
         run: |
           mkdir -p generated-clients
-          spec_paths=${{ steps.find_specs.outputs.spec_paths }}
+          spec_paths=(${{ steps.find_specs.outputs.spec_paths }})
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.3.0/openapi-generator-cli-5.3.0.jar -O openapi-generator-cli.jar
           for spec in $spec_paths; do
@@ -60,6 +63,7 @@ jobs:
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           for spec in $spec_paths; do
+            chmod +x spec
             filename=$(basename "${spec%.*}" | sed 's/\.swagger$//')
             ts_library_dir="generated-clients/${repo_prefix}-${filename}-typescript-axios-http-library"
             if [ -d "$ts_library_dir" ]; then
