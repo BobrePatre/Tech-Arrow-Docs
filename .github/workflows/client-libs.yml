@@ -43,7 +43,7 @@ jobs:
               echo "TARGETS_EXISTS='true'" >> $GITHUB_ENV
             fi
           fi
-          echo $(${{ env.TARGETS_EXISTS == 'true' }})
+          echo ${{ env.TARGETS_EXISTS == 'true' }}
 
       - name: Install jq
         if: env.TARGETS_EXISTS == 'true'
