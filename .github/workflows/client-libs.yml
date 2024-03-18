@@ -37,8 +37,8 @@ jobs:
       - name: Find API Specifications
         id: find_specs
         run: |
-          spec_paths=$(find openapi -type f \( -iname "*.yaml" -o -iname "*.json" \) -print0 | xargs -0 echo)
-          echo "spec_paths=$spec_paths" >> $GITHUB_OUTPUT
+          spec_paths=$$(find openapi -name "*.swagger.json");
+          echo "spec_paths=$$spec_paths" >> $GITHUB_OUTPUT
 
 
       - name: Generate Clients
@@ -134,7 +134,9 @@ jobs:
 
       - name: Find Proto Specifications
         id: find_protos
-        run: echo "proto_paths=$(find proto -type f -iname "*.proto" | xargs)" >> $GITHUB_OUTPUT
+        run: |
+          proto_paths=$$(find openapi -name "*.proto");
+          echo "proto_paths=$$proto_paths" >> $GITHUB_OUTPUT
 
       - name: Generate gRPC Clients and Servers
         run: |
