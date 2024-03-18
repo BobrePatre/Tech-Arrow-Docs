@@ -28,20 +28,25 @@ jobs:
       - name: "Check Targets"
         run: |
           if [ ! -d "openapi" ]; then
-            echo "openapi dir is not exists, skipping job"
-            exit 1
+            echo "openapi dir is not exists, skipping step"
+            echo "TARGETS_EXISTS='false'" >> $GITHUB_ENV
+            exit 0
           fi
           
           spec_paths=$(find openapi -name "*.swagger.json")
           if [ -z "$spec_paths" ]; then 
-            echo "Nothing to generate"
-            exit 1
+            echo "Nothing to generate, skipping step"
+            echo "TARGETS_EXISTS='false'" >> $GITHUB_ENV
+            exit 0
           fi
+          echo "TARGETS_EXISTS='true'" >> $GITHUB_ENV
 
       - name: Install jq
+        if: env.TARGETS_EXISTS == true
         run: sudo apt-get update && sudo apt-get install jq -y
 
       - name: Set up JDK 11
+        if: env.TARGETS_EXISTS == true
         uses: actions/setup-java@main
         with:
           java-version: '11'
@@ -51,6 +56,7 @@ jobs:
 
 
       - name: Generate Clients
+        if: env.TARGETS_EXISTS == true
         run: |
           spec_paths=$(find openapi -name "*.swagger.json")
           if [ -z "$spec_paths" ]; then 
@@ -72,6 +78,7 @@ jobs:
           done
 
       - name: Customize package.json for TypeScript Axios
+        if: env.TARGETS_EXISTS == true
         run: |
           spec_paths=$(find openapi -name "*.swagger.json")
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
@@ -90,6 +97,7 @@ jobs:
           done
 
       - name: Create and Push Repositories
+        if: env.TARGETS_EXISTS == true
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
@@ -117,34 +125,41 @@ jobs:
 
       - name: "Check Targets"
         run: |
-          if [ ! -d "proto" ]; then
-            echo "proto dir is not exists, skipping job"
-            exit 1
+          if [ ! -d "openapi" ]; then
+            echo "openapi dir is not exists, skipping step"
+            echo "TARGETS_EXISTS='false'" >> $GITHUB_ENV
+            exit 0
           fi
           
-          proto_paths=$(find proto -name "*.proto")
-          if [ -z "$proto_paths" ]; then 
-            echo "Nothing to generate"
-            exit 1
+          spec_paths=$(find openapi -name "*.swagger.json")
+          if [ -z "$spec_paths" ]; then 
+            echo "Nothing to generate, skipping step"
+            echo "TARGETS_EXISTS='false'" >> $GITHUB_ENV
+            exit 0
           fi
+          echo "TARGETS_EXISTS='true'" >> $GITHUB_ENV
 
 
       - name: Set up Go
+        if: env.TARGETS_EXISTS == true
         uses: actions/setup-go@main
         with:
           go-version: '^1.16'
 
       - name: Set up Dart
+        if: env.TARGETS_EXISTS == true
         uses: dart-lang/setup-dart@main
         with:
           sdk: "stable"
 
       - name: Set up Python
+        if: env.TARGETS_EXISTS == true
         uses: actions/setup-python@main
         with:
           python-version: '3.x'
 
       - name: Setup Protobuf and Plugins
+        if: env.TARGETS_EXISTS == true
         run: |
           sudo apt-get update
           sudo apt-get install -y protobuf-compiler
@@ -158,6 +173,7 @@ jobs:
         
 
       - name: Generate gRPC Clients and Servers
+        if: env.TARGETS_EXISTS == true
         run: |
           mkdir -p generated-grpc-libs/{dart,go,python}
           proto_paths=$(find openapi -name "*.proto")
@@ -176,6 +192,7 @@ jobs:
           done
 
       - name: Create and Push Repositories for gRPC
+        if: env.TARGETS_EXISTS == true
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
