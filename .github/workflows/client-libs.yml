@@ -18,6 +18,11 @@ jobs:
         id: repo_prefix
         run: echo "::set-output name=prefix::$(echo "$GITHUB_REPOSITORY" | sed 's/.*\///' | sed 's/-Docs\|-Declaration\|-Documentation//')"
 
+      - name: Manage Permissions For Scripts
+        id: scripts_perms
+        run: |
+          chmod +x scripts/manage-repo.sh
+
   generate-and-deploy-http-libs:
     needs: setup-environment
     runs-on: ubuntu-latest
