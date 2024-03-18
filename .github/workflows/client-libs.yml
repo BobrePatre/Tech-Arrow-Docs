@@ -36,11 +36,11 @@ jobs:
             spec_paths=$(find openapi -name "*.swagger.json")
             if [ -z "$spec_paths" ]; then 
               echo "No .swagger.json files to generate, skipping step"
-              echo "TARGETS_EXISTS='false'" >> $GITHUB_OUTPUT
+              echo "TARGETS_EXISTS='false'" >> $GITHUB_ENV
               exit 0
             else
               echo "Spec files found, proceeding with the step"
-              echo "TARGETS_EXISTS='true'" >> $GITHUB_OUTPUT
+              echo "TARGETS_EXISTS='true'" >> $GITHUB_ENV
             fi
           fi
           echo $(${{ env.TARGETS_EXISTS }} == 'true')
@@ -60,7 +60,7 @@ jobs:
 
 
       - name: Generate Clients
-        if: steps.check_targets.outputs.TARGETS_EXISTS == 'true'
+        if: env.TARGETS_EXISTS == 'true'
         run: |
           spec_paths=$(find openapi -name "*.swagger.json")
           if [ -z "$spec_paths" ]; then 
@@ -82,7 +82,7 @@ jobs:
           done
 
       - name: Customize package.json for TypeScript Axios
-        if: steps.check_targets.outputs.TARGETS_EXISTS == 'true'
+        if: env.TARGETS_EXISTS == 'true'
         run: |
           spec_paths=$(find openapi -name "*.swagger.json")
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
@@ -101,7 +101,7 @@ jobs:
           done
 
       - name: Create and Push Repositories
-        if: steps.check_targets.outputs.TARGETS_EXISTS == 'true'
+        if: env.TARGETS_EXISTS == 'true'
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
