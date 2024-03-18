@@ -129,9 +129,7 @@ jobs:
 
       - name: Generate gRPC Clients and Servers
         run: |
-          mkdir -p generated-grpc-libs/dart
-          mkdir -p generated-grpc-libs/go
-          mkdir -p generated-grpc-libs/python
+          mkdir -p generated-grpc-libs/{dart,go,python}
           proto_paths=$(find openapi -name "*.proto")
           proto_include="-I proto -I vendor/googleapis -I vendor/grpc-gateway"
           for proto in $proto_paths; do 
@@ -142,7 +140,7 @@ jobs:
               --go_opt paths=source_relative \
               --go-grpc_out generated-grpc-libs/go  \
               --go-grpc_opt paths=source_relative \
-              --grpc-gateway_out generated-grpc-libs/go) \
+              --grpc-gateway_out generated-grpc-libs/go \
               --grpc-gateway_opt paths=source_relative \
               "$proto"
           done
