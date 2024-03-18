@@ -36,7 +36,6 @@ else
   curl -u "$owner:$GH_PAT" https://api.github.com/user/repos -d "{\"name\":\"$library_name\"}"
 
   # Инициализация и первый коммит в новом репозитории
-  mkdir -p "$output_dir"
   cd "$output_dir" || exit 1
   git init
   git config user.name "GitHub Actions"
