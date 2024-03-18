@@ -1,0 +1,56 @@
+name: Tag Client Libraries on Tag Creation
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  setup-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      repo_prefix: ${{ steps.repo_prefix.outputs.prefix }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Determine Repo Prefix
+        id: repo_prefix
+        run: echo "prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/.*\///' | sed 's/-Docs\|-Declaration\|-Documentation//')" >> $GITHUB_OUTPUT
+
+  tag-client-libraries:
+    needs: setup-environment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Tag Repos for Existing Specs
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          chmod +x scripts/tag-client-libs.sh
+          spec_paths=$(find openapi -name "*.swagger.json")
+          proto_paths=$(find proto -name "*.proto")
+          repo_prefix="${{ needs.setup-environment.outputs.repo_prefix }}"
+          new_tag="${GITHUB_REF#refs/tags/}"
+          
+          for spec in $spec_paths; do
+              filename=$(basename "${spec%.*}" | sed 's/\.swagger$//')
+              for lang in go python dart-dio typescript-axios; do
+                repo_name="${repo_prefix}-${filename}-${lang}-http-library"
+                echo "Tagging repository for spec: $repo_name with $new_tag"
+                # Script to tag the repository
+                scripts/tag-client-libs.sh "$repo_name" "$new_tag"
+              done
+          done
+          
+          for proto in $proto_paths; do
+              filename=$(basename "${proto%.*}")
+              for lang in go dart; do
+                repo_name="${repo_prefix}-${filename}-${lang}-grpc-library"
+                echo "Tagging repository for proto: $repo_name with $new_tag"
+                # Script to tag the repository
+                scripts/tag-client-libs.sh "$repo_name" "$new_tag"
+              done
+          done

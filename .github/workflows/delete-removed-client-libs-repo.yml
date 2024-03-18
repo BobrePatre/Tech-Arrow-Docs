@@ -1,9 +1,9 @@
-name: Tag Client Libraries on Tag Creation
+name: Delete Removed Client Libs Repo
 
 on:
   push:
-    tags:
-      - '*'
+    branches:
+      - main
 
 jobs:
   setup-environment:
@@ -11,46 +11,47 @@ jobs:
     outputs:
       repo_prefix: ${{ steps.repo_prefix.outputs.prefix }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@main
 
       - name: Determine Repo Prefix
         id: repo_prefix
         run: echo "prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/.*\///' | sed 's/-Docs\|-Declaration\|-Documentation//')" >> $GITHUB_OUTPUT
 
-  tag-client-libraries:
+
+  delete-repos-for-deleted-specs:
     needs: setup-environment
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Previous Commit for Comparison
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - name: Tag Repos for Existing Specs
+      - name: Delete Repos for Deleted Specs
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          chmod +x scripts/tag-client-libs.sh
-          spec_paths=$(find openapi -name "*.swagger.json")
-          proto_paths=$(find proto -name "*.proto")
+          chmod +x scripts/delete-repo.sh
+          git diff --name-status ${{ github.event.before }} ${{ github.sha }} | grep '^D' | cut -f2 > deleted_files.txt
+          deleted_files=$(cat deleted_files.txt)
           repo_prefix="${{ needs.setup-environment.outputs.repo_prefix }}"
-          new_tag="${GITHUB_REF#refs/tags/}"
-          
-          for spec in $spec_paths; do
-              filename=$(basename "${spec%.*}" | sed 's/\.swagger$//')
+          for file in $deleted_files; do
+            if [[ "$file" =~ \.(swagger\.json)$ ]]; then
+              filename=$(basename "${file%.*}" | sed 's/\.swagger$//')
               for lang in go python dart-dio typescript-axios; do
-                repo_name="${repo_prefix}-${filename}-${lang}-http-library"
-                echo "Tagging repository for spec: $repo_name with $new_tag"
-                # Script to tag the repository
-                scripts/tag-client-libs.sh "$repo_name" "$new_tag"
+              repo_name="${repo_prefix}-${filename}-${lang}-http-library" # Adjust based on actual naming convention
+              echo "Deleting repository for deleted spec: $repo_name"
+              ./scripts/delete-repo.sh "$repo_name"
               done
-          done
-          
-          for proto in $proto_paths; do
-              filename=$(basename "${proto%.*}")
-              for lang in go dart; do
-                repo_name="${repo_prefix}-${filename}-${lang}-grpc-library"
-                echo "Tagging repository for proto: $repo_name with $new_tag"
-                # Script to tag the repository
-                scripts/tag-client-libs.sh "$repo_name" "$new_tag"
+            fi
+            if [[ "$file" =~ \.(proto)$ ]]; then
+              filename=$(basename "${file%.*}")
+              for lang in go dart; do 
+                repo_name="${repo_prefix}-${filename}-${lang}-grpc-library" # Adjust based on actual naming convention
+                echo "Deleting repository for deleted spec: $repo_name"
+                ./scripts/delete-repo.sh "$repo_name"
               done
+
+            fi
           done
+        
