@@ -59,7 +59,6 @@ jobs:
           spec_paths=$(find openapi -name "*.swagger.json")
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           for spec in $spec_paths; do
-            chmod +x spec
             filename=$(basename "${spec%.*}" | sed 's/\.swagger$//')
             ts_library_dir="generated-clients/${repo_prefix}-${filename}-typescript-axios-http-library"
             if [ -d "$ts_library_dir" ]; then
