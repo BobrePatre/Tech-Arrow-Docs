@@ -209,6 +209,7 @@ jobs:
           proto_paths=$(find proto -name "*.proto")
           for proto in $proto_paths; do
             filename=$(basename "${proto%.*}")
+            echo ¢filename
             for lang in dart go; do
               library_name="${repo_prefix}-${filename}-${lang}-grpc-library"
               output_dir="generated-grpc-libs/$lang/$filename"
