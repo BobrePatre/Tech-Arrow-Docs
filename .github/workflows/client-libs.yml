@@ -181,14 +181,19 @@ jobs:
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
+          chmod +x scripts/delete-repo.sh
           deleted_files="${{ steps.find_deleted.outputs.deleted_files }}"
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           for file in $deleted_files; do
-            if [[ "$file" =~ \.(swagger\.json|proto)$ ]]; then
+            if [[ "$file" =~ \.(swagger\.json)$ ]]; then
               filename=$(basename "${file%.*}")
-              # Assuming the repository naming convention is consistent
-              # Adapt the next line to match your repository naming logic
               repo_name="${repo_prefix}-${filename}-http-library" # Adjust based on actual naming convention
+              echo "Deleting repository for deleted spec: $repo_name"
+              scripts/delete-repo.sh "$repo_name"
+            fi
+            if [[ "$file" =~ \.(proto)$ ]]; then
+              filename=$(basename "${file%.*}")
+              repo_name="${repo_prefix}-${filename}-grpc-library" # Adjust based on actual naming convention
               echo "Deleting repository for deleted spec: $repo_name"
               scripts/delete-repo.sh "$repo_name"
             fi
