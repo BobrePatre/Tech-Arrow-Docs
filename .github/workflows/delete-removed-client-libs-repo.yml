@@ -37,16 +37,21 @@ jobs:
           repo_prefix="${{ needs.setup-environment.outputs.repo_prefix }}"
           for file in $deleted_files; do
             if [[ "$file" =~ \.(swagger\.json)$ ]]; then
-              filename=$(basename "${file%.*}")
-              repo_name="${repo_prefix}-${filename}-http-library" # Adjust based on actual naming convention
+              filename=$(basename "${file%.*}" | sed 's/\.swagger$//')
+              for lang in go python dart-dio typescript-axios; do
+              repo_name="${repo_prefix}-${filename}-${lang}-http-library" # Adjust based on actual naming convention
               echo "Deleting repository for deleted spec: $repo_name"
               ./scripts/delete-repo.sh "$repo_name"
+              done
             fi
             if [[ "$file" =~ \.(proto)$ ]]; then
               filename=$(basename "${file%.*}")
-              repo_name="${repo_prefix}-${filename}-grpc-library" # Adjust based on actual naming convention
-              echo "Deleting repository for deleted spec: $repo_name"
-              ./scripts/delete-repo.sh "$repo_name"
+              for lang in go dart; do 
+                repo_name="${repo_prefix}-${filename}-${lang}-grpc-library" # Adjust based on actual naming convention
+                echo "Deleting repository for deleted spec: $repo_name"
+                ./scripts/delete-repo.sh "$repo_name"
+              done
+
             fi
           done
         
