@@ -1,0 +1,82 @@
+syntax = 'proto3';
+
+package api.Lolo;
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option go_package = "github.com/BobrePatre/ProjectTemplate/pkg/api/grpc/golang/Lolo";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+    info: {
+        title: "Lolo API",
+        version: "v1",
+    },
+    security_definitions: {
+        security: {
+            key: "BearerAuth",
+            value: {
+                type: TYPE_OAUTH2
+                flow: FLOW_ACCESS_CODE
+                authorization_url: "https://keycloak.Lolo.com/auth/realms/yourrealm/protocol/openid-connect/auth",
+                token_url: "https://keycloak.Lolo.com/auth/realms/yourrealm/protocol/openid-connect/token",
+
+                scopes: {
+                    scope: {
+                        key: "openid",
+                        value: "OpenID Connect"
+                    },
+                    scope: {
+                        key: "email",
+                        value: "Email"
+                    },
+                    scope: {
+                        key: "profile",
+                        value: "Profile"
+                    }
+                }
+            }
+        }
+    },
+};
+
+service LoloService {
+    rpc Lolo(LoloRequest) returns (LoloResponse) {
+        option (google.api.http) = {
+            post: "/grpc/api/Lolo"
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Create an Lolo",
+            security: {
+                security_requirement: {key: "BearerAuth"}
+            }
+        };
+    }
+}
+
+message LoloRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema : {
+            title: "CreateLoloRequest"
+        }
+
+    };
+
+    string title = 1;
+    string description = 2;
+    string body = 3;
+}
+
+message LoloResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema : {
+            title: "CreateLoloResponse"
+        }
+    };
+
+
+    string title = 1;
+    string description = 2;
+    string body = 3;
+}
