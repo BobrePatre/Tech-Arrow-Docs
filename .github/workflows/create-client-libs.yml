@@ -183,7 +183,7 @@ jobs:
         if: env.TARGETS_EXISTS
         run: |
           mkdir -p generated-grpc-libs/{dart,go,python}
-          proto_paths=$(find openapi -name "*.proto")
+          proto_paths=$(find proto -name "*.proto")
           proto_include="-I proto -I vendor/googleapis -I vendor/grpc-gateway"
           for proto in $proto_paths; do 
             protoc \
@@ -209,7 +209,7 @@ jobs:
           proto_paths=$(find proto -name "*.proto")
           for proto in $proto_paths; do
             filename=$(basename "${proto%.*}")
-            echo ¢filename
+            echo $filename
             for lang in dart go; do
               library_name="${repo_prefix}-${filename}-${lang}-grpc-library"
               output_dir="generated-grpc-libs/$lang/$filename"
