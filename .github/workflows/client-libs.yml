@@ -87,6 +87,7 @@ jobs:
               output_dir="generated-clients/$library_name"
               # Simplify repository management using a script or a dedicated step
               scripts/manage-repo.sh "$library_name" "$output_dir" "$commit_message"
+            done
           done
 
   generate-and-deploy-grpc-libs:
