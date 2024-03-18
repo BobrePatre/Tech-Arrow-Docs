@@ -96,6 +96,9 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@main
+        with:
+         submodules: "recursive"
+
 
       - name: Set up Go
         uses: actions/setup-go@main
@@ -112,8 +115,6 @@ jobs:
         with:
           python-version: '3.x'
 
-
-
       - name: Setup Protobuf and Plugins
         run: |
           sudo apt-get update
@@ -125,6 +126,8 @@ jobs:
           dart pub global activate protoc_plugin
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
 
+          
+
       - name: Find Proto Specifications
         id: find_protos
         run: echo "proto_paths=$(find proto -type f -iname "*.proto" | xargs)" >> $GITHUB_OUTPUT
@@ -134,13 +137,14 @@ jobs:
           mkdir -p generated-grpc-libs/{dart,go,python}
           proto_paths=${{ steps.find_protos.outputs.proto_paths }}
           proto_include="-I proto -I vendor -I vendor/googleapis -I vendor/grpc-gateway"
-          for proto in $proto_paths; do
-            protoc $proto_include \
-                   --dart_out=grpc:generated-grpc-libs/dart \
-                   --go_out=generated-grpc-libs/go --go_opt=paths=source_relative \
-                   --go-grpc_out=generated-grpc-libs/go --go-grpc_opt=paths=source_relative \
-                   --python_out=generated-grpc-libs/python --python-grpc_out=generated-grpc-libs/python \
-                   "$proto"
+          for proto in $proto_paths; do 
+            protoc
+              $proto_include
+              --dart_out=grpc:generated-grpc-libs/dart \
+              --go_out=generated-grpc-libs/go --go_opt=paths=source_relative \
+              --go-grpc_out=generated-grpc-libs/go --go-grpc_opt=paths=source_relative \
+              --python_out=generated-grpc-libs/python --python-grpc_out=generated-grpc-libs/python \
+              "$proto"
           done
 
       - name: Create and Push Repositories for gRPC
