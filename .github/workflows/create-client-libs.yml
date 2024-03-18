@@ -210,7 +210,7 @@ jobs:
             echo $filename
             for lang in dart go; do
               library_name="${repo_prefix}-${filename}-${lang}-grpc-library"
-              output_dir="generated-grpc-libs/$lang/$filename"
+              output_dir="generated-grpc-libs/$lang/${proto%.*}"
               # This script should handle checking, updating, or creating repositories
               scripts/manage-repo.sh "$library_name" "$output_dir" "$commit_message"
             done
