@@ -211,7 +211,7 @@ jobs:
             filename=$(basename "${proto%.*}")
             for lang in dart go python; do
               library_name="${repo_prefix}-${filename}-${lang}-grpc-library"
-              output_dir="generated-grpc-libs/$lang/$library_name"
+              output_dir="generated-grpc-libs/$lang/$filename"
               # This script should handle checking, updating, or creating repositories
               scripts/manage-repo.sh "$library_name" "$output_dir" "$commit_message"
             done
@@ -223,7 +223,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Previous Commit for Comparison
-        uses: actions/checkout@main
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
@@ -231,29 +231,26 @@ jobs:
         id: find_deleted
         run: |
           git diff --name-status ${{ github.event.before }} ${{ github.sha }} | grep '^D' | cut -f2 > deleted_files.txt
-          echo "deleted_files<<EOF" >> $GITHUB_OUTPUT
-          cat deleted_files.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
+          echo "deleted_files=$(cat deleted_files.txt)" >> $GITHUB_OUTPUT
 
       - name: Delete Repos for Deleted Specs
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           chmod +x scripts/delete-repo.sh
-          deleted_files=${{ steps.find_deleted.outputs.deleted_files }}
-          repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
-          for file in $deleted_files; do
+          deleted_files=$(echo "${{ steps.find_deleted.outputs.deleted_files }}" | tr ' ' '\n')
+          repo_prefix="${{ needs.setup-environment.outputs.repo_prefix }}"
+          echo "$deleted_files" | while read file; do
             if [[ "$file" =~ \.(swagger\.json)$ ]]; then
               filename=$(basename "${file%.*}")
               repo_name="${repo_prefix}-${filename}-http-library" # Adjust based on actual naming convention
               echo "Deleting repository for deleted spec: $repo_name"
-              scripts/delete-repo.sh "$repo_name"
+              ./scripts/delete-repo.sh "$repo_name"
             fi
             if [[ "$file" =~ \.(proto)$ ]]; then
               filename=$(basename "${file%.*}")
               repo_name="${repo_prefix}-${filename}-grpc-library" # Adjust based on actual naming convention
               echo "Deleting repository for deleted spec: $repo_name"
-              scripts/delete-repo.sh "$repo_name"
+              ./scripts/delete-repo.sh "$repo_name"
             fi
           done
