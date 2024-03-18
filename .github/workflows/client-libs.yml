@@ -6,14 +6,27 @@ on:
       - main
 
 jobs:
+  setup-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      repo_prefix: ${{ steps.repo_prefix.outputs.prefix }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Determine Repo Prefix
+        id: repo_prefix
+        run: echo "::set-output name=prefix::$(echo "$GITHUB_REPOSITORY" | sed 's/.*\///' | sed 's/-Docs\|-Declaration\|-Documentation//')"
+
   generate-and-deploy-http-libs:
+    needs: setup-environment
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
 
       - name: Install jq
-        run: sudo apt-get install jq
+        run: sudo apt-get update && sudo apt-get install jq -y
 
       - name: Set up JDK 11
         uses: actions/setup-java@v2
@@ -23,18 +36,15 @@ jobs:
 
       - name: Find API Specifications
         id: find_specs
-        run: |
-          echo "::set-output name=spec_paths::$(find openapi -type f \( -iname "*.yaml" -o -iname "*.json" \) | xargs)"
-        shell: bash
+        run: echo "::set-output name=spec_paths::$(find openapi -type f \( -iname "*.yaml" -o -iname "*.json" \) | xargs)"
 
       - name: Generate Clients
         run: |
           mkdir -p generated-clients
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
-          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/BobrePatre\///' | sed 's/-Docs\|-Declaration\|-Documentation//')
+          repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           for spec in $spec_paths; do
-            filename=$(basename "${spec%.*}")
-            filename=${filename%.swagger}
+            filename=$(basename "${spec%.*}" | sed 's/\.swagger$//')
             for generator in go python dart-dio typescript-axios; do
               library_name="${repo_prefix}-${filename}-${generator}-http-library"
               output_dir="generated-clients/$library_name"
@@ -44,46 +54,24 @@ jobs:
               java -jar openapi-generator-cli.jar generate -i "$spec" -g "$generator" -o "$output_dir"
             done
           done
-        shell: bash
 
       - name: Customize package.json for TypeScript Axios
         run: |
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
-          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/BobrePatre\///' | sed 's/-Docs\|-Declaration\|-Documentation//')
+          repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           for spec in $spec_paths; do
-            filename=$(basename "${spec%.*}")
-            filename=${filename%.swagger}
+            filename=$(basename "${spec%.*}" | sed 's/\.swagger$//')
             ts_library_dir="generated-clients/${repo_prefix}-${filename}-typescript-axios-http-library"
             if [ -d "$ts_library_dir" ]; then
               cd "$ts_library_dir"
               if [ -f "package.json" ]; then
-                jq --arg url "https://github.com/BobrePatre/${repo_prefix}-${filename}-typescript-axios-http-library.git" '.repository = {"type": "git", "url": $url}' package.json > temp.json && mv temp.json package.json
+                jq --arg url "https://github.com/${{ github.repository_owner }}/${repo_prefix}-${filename}-typescript-axios-http-library.git" '.repository = {"type": "git", "url": $url}' package.json > temp.json && mv temp.json package.json
               else
-                cat > package.json <<EOF
-                {
-                  "name": "${repo_prefix}-${filename}-typescript-axios-http-library",
-                  "version": "1.0.0",
-                  "description": "TypeScript Axios client generated from OpenAPI spec",
-                  "main": "index.js",
-                  "scripts": {
-                    "build": "tsc"
-                  },
-                  "author": "",
-                  "license": "ISC",
-                  "dependencies": {
-                    "axios": "^0.21.1"
-                  },
-                  "repository": {
-                    "type": "git",
-                    "url": "https://github.com/BobrePatre/${repo_prefix}-${filename}-typescript-axios-http-library.git"
-                  }
-                }
-          EOF
+                jq -n --arg name "${repo_prefix}-${filename}-typescript-axios-http-library" --arg url "https://github.com/${{ github.repository_owner }}/${repo_prefix}-${filename}-typescript-axios-http-library.git" '{"name": $name, "version": "1.0.0", "description": "TypeScript Axios client generated from OpenAPI spec", "main": "index.js", "scripts": {"build": "tsc"}, "author": "", "license": "ISC", "dependencies": {"axios": "^0.21.1"}, "repository": {"type": "git", "url": $url}}' > package.json
               fi
               cd -
             fi
           done
-        shell: bash
 
       - name: Create and Push Repositories
         env:
@@ -91,185 +79,83 @@ jobs:
         run: |
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
           commit_message=$(git log -1 --pretty=%B)
-          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/BobrePatre\///' | sed 's/-Docs\|-Declaration\|-Documentation//')
+          repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           for spec in $spec_paths; do
-            filename=$(basename "${spec%.*}")
-            filename=${filename%.swagger} # Remove .swagger from the filename
+            filename=$(basename "${spec%.*}" | sed 's/\.swagger$//')
             for generator in go python dart-dio typescript-axios; do
               library_name="${repo_prefix}-${filename}-${generator}-http-library"
               output_dir="generated-clients/$library_name"
-          
-              echo "Checking if $library_name repository exists..."
-              if curl --silent --output /dev/null --head --fail "https://github.com/BobrePatre/$library_name"; then
-                echo "Repository $library_name already exists, updating..."
-                # Создаем временную директорию для клонирования и обновления репозитория
-                tmp_clone_dir=$(mktemp -d)
-                git clone https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git "$tmp_clone_dir"
-          
-                # Синхронизируем сгенерированные файлы во временную директорию
-                rsync -av --exclude='.git' "$output_dir/" "$tmp_clone_dir/"
-          
-                cd "$tmp_clone_dir" || exit 1
-                git config user.name "GitHub Actions"
-                git config user.email "actions@github.com"
-                git add .
-                if ! git diff --cached --exit-code; then
-                  git commit -m "$commit_message"
-                  git pull --rebase origin main
-                  git push origin main
-                else
-                  echo "No changes to commit for $library_name."
-                fi
-                cd -
-                # Удаляем временную директорию
-                rm -rf "$tmp_clone_dir"
-              else
-                echo "Creating repository $library_name..."
-                curl -u "BobrePatre:$GH_PAT" https://api.github.com/user/repos -d "{\"name\":\"$library_name\"}"
-          
-                # Инициализация и первый коммит в новом репозитории
-                mkdir -p "$output_dir"
-                cd "$output_dir" || exit 1
-                git init
-                git config user.name "GitHub Actions"
-                git config user.email "actions@github.com"
-                git add .
-                git commit -m "$commit_message"
-                git branch -M main
-                git remote add origin https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git
-                git push -u origin main
-                cd -
-              fi
-            done
+              # Simplify repository management using a script or a dedicated step
+              ./manage-repo.sh "$library_name" "$output_dir" "$commit_message"
           done
-  
-  
-  
-  
 
   generate-and-deploy-grpc-libs:
+    needs: setup-environment
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-
-      - name: Checkout submodules
-        run: |
-          git submodule update --init --recursive
-
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-
-      - name: Set up Dart
-        uses: dart-lang/setup-dart@v1
-        with:
-          sdk: "stable"
 
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: '^1.16'
 
-      - name: Install Protobuf Compiler and Plugins
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "stable"
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+
+
+      - name: Setup Protobuf and Plugins
         run: |
           sudo apt-get update
           sudo apt-get install -y protobuf-compiler
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
           go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest
-          python -m pip install grpcio-tools
-          python -m pip install grpcio
+          pip install grpcio-tools grpcio
           dart pub global activate protoc_plugin
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
 
       - name: Find Proto Specifications
         id: find_protos
-        run: |
-          echo "::set-output name=proto_paths::$(find proto -type f -iname "*.proto" | xargs)"
-        shell: bash
+        run: echo "::set-output name=proto_paths::$(find proto -type f -iname "*.proto" | xargs)"
 
       - name: Generate gRPC Clients and Servers
         run: |
-          export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
-          dart_out_dir="generated-grpc-libs/dart"
-          go_out_dir="generated-grpc-libs/go"
-          
-          mkdir -p "$dart_out_dir"
-          mkdir -p "$go_out_dir"
-          
-          proto_include="-I proto -I vendor -I vendor/googleapis -I vendor/grpc-gateway"
+          mkdir -p generated-grpc-libs/{dart,go,python}
           proto_paths=${{ steps.find_protos.outputs.proto_paths }}
+          proto_include="-I proto -I vendor -I vendor/googleapis -I vendor/grpc-gateway"
           for proto in $proto_paths; do
-            dart_out_dir="generated-grpc-libs/dart"
-            go_out_dir="generated-grpc-libs/go"
-            python_out_dir="generated-grpc-libs/python"
-            echo "Generating gRPC client and server for $proto"
             protoc $proto_include \
-                   --dart_out=grpc:"$dart_out_dir" \
-                   --go_out="$go_out_dir" --go_opt=paths=source_relative \
-                   --go-grpc_out="$go_out_dir" --go-grpc_opt=paths=source_relative \
+                   --dart_out=grpc:generated-grpc-libs/dart \
+                   --go_out=generated-grpc-libs/go --go_opt=paths=source_relative \
+                   --go-grpc_out=generated-grpc-libs/go --go-grpc_opt=paths=source_relative \
+                   --python_out=generated-grpc-libs/python --python-grpc_out=generated-grpc-libs/python \
                    "$proto"
           done
-        env:
-          PATH: ${{ env.PATH }}:/home/runner/.local/bin
 
-
-      - name: Create and Push Repositories
+      - name: Create and Push Repositories for gRPC
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          spec_paths=${{ steps.find_specs.outputs.spec_paths }}
+          repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           commit_message=$(git log -1 --pretty=%B)
-          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/BobrePatre\///' | sed 's/-Docs\|-Declaration\|-Documentation//')
-          for spec in $spec_paths; do
-            filename=$(basename "${spec%.*}")
-            filename=${filename%.swagger} # Remove .swagger from the filename
-            for generator in python dart ; do
-              library_name="${repo_prefix}-${filename}-${generator}-grpc-library"
-              output_dir="generated-grpc-clients/$library_name"
-
-              echo "Checking if $library_name repository exists..."
-              if curl --silent --output /dev/null --head --fail "https://github.com/BobrePatre/$library_name"; then
-                echo "Repository $library_name already exists, updating..."
-                tmp_clone_dir=$(mktemp -d)
-                git clone https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git "$tmp_clone_dir"
-
-                rsync -av --exclude='.git' "$output_dir/" "$tmp_clone_dir/"Ы
-
-                cd "$tmp_clone_dir" || exit 1
-                git config user.name "GitHub Actions"
-                git config user.email "actions@github.com"
-                git add .
-                if ! git diff --cached --exit-code; then
-                  git commit -m "$commit_message"
-                  git pull --rebase origin main
-                  git push origin main
-                else
-                  echo "No changes to commit for $library_name."
-                fi
-                cd -
-                # Удаляем временную директорию
-                rm -rf "$tmp_clone_dir"
-              else
-                echo "Creating repository $library_name..."
-                curl -u "BobrePatre:$GH_PAT" https://api.github.com/user/repos -d "{\"name\":\"$library_name\"}"
-
-                # Инициализация и первый коммит в новом репозитории
-                mkdir -p "$output_dir"
-                cd "$output_dir" || exit 1
-                git init
-                git config user.name "GitHub Actions"
-                git config user.email "actions@github.com"
-                git add .
-                git commit -m "$commit_message"
-                git branch -M main
-                git remote add origin https://BobrePatre:$GH_PAT@github.com/BobrePatre/$library_name.git
-                git push -u origin main
-                cd -
-              fi
+          mkdir -p generated-grpc-libs/{dart,go,python}
+          proto_paths=${{ steps.find_protos.outputs.proto_paths }}
+          for proto in $proto_paths; do
+            filename=$(basename "${proto%.*}")
+            for lang in dart go python; do
+              library_name="${repo_prefix}-${filename}-${lang}-grpc-library"
+              output_dir="generated-grpc-libs/$lang/$library_name"
+              # This script should handle checking, updating, or creating repositories
+              scripts/manage-repo.sh "$library_name" "$output_dir" "$commit_message"
             done
           done
-
