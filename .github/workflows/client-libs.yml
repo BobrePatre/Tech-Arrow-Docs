@@ -60,6 +60,7 @@ jobs:
           spec_paths=${{ steps.find_specs.outputs.spec_paths }}
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           for spec in $spec_paths; do
+            chmod +x spec
             filename=$(basename "${spec%.*}" | sed 's/\.swagger$//')
             ts_library_dir="generated-clients/${repo_prefix}-${filename}-typescript-axios-http-library"
             if [ -d "$ts_library_dir" ]; then
@@ -138,6 +139,7 @@ jobs:
           proto_paths=${{ steps.find_protos.outputs.proto_paths }}
           proto_include="-I proto -I vendor/googleapis -I vendor/grpc-gateway"
           for proto in $proto_paths; do 
+            chmod +x proto
             protoc \
               $proto_include \
               --dart_out generated-grpc-libs/dart \
