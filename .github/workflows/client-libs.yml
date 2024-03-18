@@ -213,7 +213,7 @@ jobs:
                    --go_out="$output_go" --go_opt=paths=source_relative \
                    --go-grpc_out="$output_go" --go-grpc_opt=paths=source_relative \
                    --python_out="$output_python" \
-                   --grpc_python_out="$output_python" \
+                   --python-grpc_out="$output_python" \
                    "${proto}"
           done
         shell: bash
