@@ -11,8 +11,12 @@ jobs:
     outputs:
       repo_prefix: ${{ steps.repo_prefix.outputs.prefix }}
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm ci
+      - run: npm test
 
       - name: Determine Repo Prefix
         id: repo_prefix
