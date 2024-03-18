@@ -152,6 +152,7 @@ jobs:
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
+          chmod +x scripts/manage-repo.sh
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           commit_message=$(git log -1 --pretty=%B)
           mkdir -p generated-grpc-libs/{dart,go,python}
