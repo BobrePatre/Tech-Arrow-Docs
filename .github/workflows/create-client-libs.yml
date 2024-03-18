@@ -48,7 +48,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install jq -y
 
       - name: Set up JDK 11
-        if: env.TARGETS_EXISTS == ${{ true }}
+        if: env.TARGETS_EXISTS == 1
         uses: actions/setup-java@main
         with:
           java-version: '11'
