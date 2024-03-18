@@ -50,7 +50,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install jq -y
 
       - name: Set up JDK 11
-        if: env.TARGETS_EXISTS == true
+        if: env.TARGETS_EXISTS
         uses: actions/setup-java@main
         with:
           java-version: '11'
@@ -206,7 +206,7 @@ jobs:
           chmod +x scripts/manage-repo.sh
           repo_prefix=${{ needs.setup-environment.outputs.repo_prefix }}
           commit_message=$(git log -1 --pretty=%B)
-          proto_paths=$(find openapi -name "*.proto")
+          proto_paths=$(find proto -name "*.proto")
           for proto in $proto_paths; do
             filename=$(basename "${proto%.*}")
             for lang in dart go python; do
