@@ -67,9 +67,6 @@
         },
         "body": {
           "type": "string"
-        },
-        "baggerfast": {
-          "type": "string"
         }
       },
       "title": "CreateExampleRequest"
