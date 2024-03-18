@@ -46,7 +46,7 @@ jobs:
           
 
       - name: Install jq
-        if: ${{ env.TARGETS_EXISTS == ${{ true }} }}
+        if: ${{ env.TARGETS_EXISTS == true }}
         run: sudo apt-get update && sudo apt-get install jq -y
 
       - name: Set up JDK 11
