@@ -188,28 +188,28 @@ jobs:
 
       - name: Generate gRPC Clients and Servers
         run: |
-          mkdir -p generated-grpc-clients
+          mkdir -p generated-grpc-clients/dart
+          mkdir -p generated-grpc-clients/go
+          mkdir -p generated-grpc-clients/python
           proto_paths=${{ steps.find_protos.outputs.proto_paths }}
-          repo_prefix=$(echo "$GITHUB_REPOSITORY" | sed 's/.*/\L&/' | sed 's/BobrePatre\///' | sed 's/-docs\|-declaration\|-documentation//')
+          repo_prefix=$(echo "$GITHUB_REPOSITORY" | awk '{print tolower($0)}' | sed 's/bobrepatre\///' | sed 's/-docs\|-declaration\|-documentation//')
           for proto in $proto_paths; do
             directory=$(dirname "${proto}")
             filename=$(basename "${proto%.*}")
-            for generator in dart go python; do
-              library_name="${repo_prefix}-${filename}-${generator}-grpc-library"
-              output_dir="generated-grpc-clients/$library_name"
-              mkdir -p "$output_dir"
-              echo "Generating $generator gRPC client and server for $proto"
-              protoc -I $directory \
-                     -I vendor \
-                     -I vendor/googleapis \
-                     -I vendor/grpc-gateway \
-                     --dart_out=grpc:"$output_dir" \
-                     --go_out="$output_dir" --go_opt=paths=source_relative \
-                     --go-grpc_out="$output_dir" --go-grpc_opt=paths=source_relative \
-                     --python_out="$output_dir" \
-                     --grpc_python_out="$output_dir" \
-                     "$proto"
-            done
+            output_base="generated-grpc-clients"
+            output_dart="${output_base}/dart/${repo_prefix}-${filename}-grpc-library"
+            output_go="${output_base}/go/${repo_prefix}-${filename}-grpc-library"
+            output_python="${output_base}/python/${repo_prefix}-${filename}-grpc-library"
+            protoc -I proto \
+                   -I vendor \
+                   -I vendor/googleapis \
+                   -I vendor/grpc-gateway \
+                   --dart_out=grpc:"$output_dart" \
+                   --go_out="$output_go" --go_opt=paths=source_relative \
+                   --go-grpc_out="$output_go" --go-grpc_opt=paths=source_relative \
+                   --python_out="$output_python" \
+                   --grpc_python_out="$output_python" \
+                   "${proto}"
           done
         shell: bash
 
