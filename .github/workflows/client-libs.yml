@@ -199,11 +199,9 @@ jobs:
           proto_include="-I proto -I vendor -I vendor/googleapis -I vendor/grpc-gateway"
           proto_paths=${{ steps.find_protos.outputs.proto_paths }}
           for proto in $proto_paths; do
-            # Adjust the output directories below as necessary
             dart_out_dir="generated-grpc-libs/dart"
             go_out_dir="generated-grpc-libs/go"
             python_out_dir="generated-grpc-libs/python"
-          
             echo "Generating gRPC client and server for $proto"
             protoc $proto_include \
                    --dart_out=grpc:"$dart_out_dir" \
@@ -211,7 +209,6 @@ jobs:
                    --go-grpc_out="$go_out_dir" --go-grpc_opt=paths=source_relative \
                    "$proto"
           done
-        shell: bash
         env:
           PATH: ${{ env.PATH }}:/home/runner/.local/bin
 
