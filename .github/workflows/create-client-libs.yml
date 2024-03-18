@@ -31,13 +31,11 @@ jobs:
           if [ ! -d "openapi" ]; then
             echo "openapi directory does not exist, skipping step"
             echo "TARGETS_EXISTS=${{false}}" >> $GITHUB_ENV
-            exit 0
           else 
             spec_paths=$(find openapi -name "*.swagger.json")
             if [ -z "$spec_paths" ]; then 
               echo "No .swagger.json files to generate, skipping step"
               echo "TARGETS_EXISTS=${{false}}" >> $GITHUB_ENV
-              exit 0
             else
               echo "Spec files found, proceeding with the step"
               echo "TARGETS_EXISTS=${{true}}" >> $GITHUB_ENV
