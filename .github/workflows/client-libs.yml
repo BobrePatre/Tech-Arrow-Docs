@@ -159,9 +159,9 @@ jobs:
           python-version: '3.x'
 
       - name: Set up Dart
-        uses: actions/setup-dart@v1
+        uses: dart-lang/setup-dart@v1
         with:
-          dart-version: 'stable'
+          sdk: "stable"
 
       - name: Set up Go
         uses: actions/setup-go@v2
