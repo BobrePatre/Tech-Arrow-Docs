@@ -193,16 +193,16 @@ jobs:
 
       - name: Generate gRPC Clients and Servers
         run: |
-          mkdir -p generated-grpc-clients/dart 
-          mkdir -p generated-grpc-clients/go 
-          mkdir -p generated-grpc-clients/python
+          mkdir -p "generated-grpc-libs/dart "
+          mkdir -p "generated-grpc-libs/go "
+          mkdir -p "generated-grpc-libs/python"
           proto_include="-I proto -I vendor -I vendor/googleapis -I vendor/grpc-gateway"
           proto_paths=${{ steps.find_protos.outputs.proto_paths }}
           for proto in $proto_paths; do
             # Adjust the output directories below as necessary
-            dart_out_dir="generated-grpc-clients/dart"
-            go_out_dir="generated-grpc-clients/go"
-            python_out_dir="generated-grpc-clients/python"
+            dart_out_dir="generated-grpc-libs/dart"
+            go_out_dir="generated-grpc-libs/go"
+            python_out_dir="generated-grpc-libs/python"
           
             echo "Generating gRPC client and server for $proto"
             protoc $proto_include \
