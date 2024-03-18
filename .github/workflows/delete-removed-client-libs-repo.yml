@@ -31,6 +31,7 @@ jobs:
         id: find_deleted
         run: |
           git diff --name-status ${{ github.event.before }} ${{ github.sha }} | grep '^D' | cut -f2 > deleted_files.txt
+          echo $(cat deleted files)
           echo "deleted_files=$(cat deleted_files.txt)" >> $GITHUB_OUTPUT
 
       - name: Delete Repos for Deleted Specs
