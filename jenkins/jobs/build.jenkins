@@ -6,7 +6,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building..'
-                for (i in 0..< 100) {
+                for (i in (0..<100 as java.util.List)) {
                     echo "Example $i"
                 }
             }
