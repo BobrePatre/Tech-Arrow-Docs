@@ -1,0 +1,15 @@
+#!groovy
+
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building..'
+                // Ваши шаги для сборки
+            }
+        }
+    }
+}
+
+// API Token = 11bcc0a5c50984fb96ef783e47729d509c

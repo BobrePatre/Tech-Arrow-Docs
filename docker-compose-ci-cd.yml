@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  jenkins:
+    image: jenkins/jenkins:latest
+    ports:
+      - "8080:8080"  # Jenkins UI
+      - "50000:50000" # Jenkins agent port
+    volumes:
+      - jenkins:/var/jenkins_home
+    environment:
+      - JENKINS_OPTS=--prefix=/jenkins  # Если вы хотите, чтобы Jenkins был доступен по пути http://your_ip/jenkins
+    restart: unless-stopped
+
+volumes:
+  jenkins:

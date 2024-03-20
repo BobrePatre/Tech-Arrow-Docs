@@ -5,7 +5,7 @@ package api.lala;
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
-option go_package = "github.com/BobrePatre/ProjectTemplate/pkg/api/grpc/golang/lala";
+option go_package = "lala";
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
     info: {
