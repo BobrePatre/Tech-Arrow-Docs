@@ -5,9 +5,11 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                echo 'Building..'
-                for (i in (0..<100 as java.util.List)) {
-                    echo "Example $i"
+                script{
+                    echo 'Building..'
+                    for (i in (0..<100 as java.util.List)) {
+                        echo "Example $i"
+                    }
                 }
             }
         }
