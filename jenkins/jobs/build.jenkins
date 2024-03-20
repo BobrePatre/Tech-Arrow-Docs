@@ -6,7 +6,9 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building..'
-                // Ваши шаги для сборки
+                for (i in 0..< 100) {
+                    echo "Example $i"
+                }
             }
         }
     }
